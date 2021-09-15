@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ackermann_steering_controller_ros2)
-
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+project(ackermann_steering_controller)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -17,17 +12,108 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(controller_interface REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(realtime_tools REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_msgs REQUIRED)
+
+add_library(ackermann_steering_controller SHARED
+  # src/ackermann_steering_controller.cpp
+)
+
+target_include_directories(ackermann_steering_controller PRIVATE include)
+ament_target_dependencies(ackermann_steering_controller
+  builtin_interfaces
+  controller_interface
+  geometry_msgs
+  hardware_interface
+  nav_msgs
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  realtime_tools
+  tf2
+  tf2_msgs
+)
+
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(ackermann_steering_controller PRIVATE "ACKERMANN_STEERING_CONTROLLER_BUILDING_DLL")
+pluginlib_export_plugin_description_file(controller_interface ackermann_steering_plugin.xml)
+
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+install(TARGETS ackermann_steering_controller
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+)
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  # Samples From diff_drive_controller 
+
+  # find_package(ament_cmake_gmock REQUIRED)
+  # find_package(controller_manager REQUIRED)
+
+  # ament_add_gmock(test_diff_drive_controller
+  #   test/test_diff_drive_controller.cpp
+  #   ENV config_file=${CMAKE_CURRENT_SOURCE_DIR}/test/config/test_diff_drive_controller.yaml)
+  # target_include_directories(test_diff_drive_controller PRIVATE include)
+  # target_link_libraries(test_diff_drive_controller
+  #   diff_drive_controller
+  # )
+
+  # ament_target_dependencies(test_diff_drive_controller
+  #   geometry_msgs
+  #   hardware_interface
+  #   nav_msgs
+  #   rclcpp
+  #   rclcpp_lifecycle
+  #   realtime_tools
+  #   tf2
+  #   tf2_msgs
+  # )
+
+  # ament_add_gmock(
+  #   test_load_diff_drive_controller
+  #   test/test_load_diff_drive_controller.cpp
+  # )
+  # target_include_directories(test_load_diff_drive_controller PRIVATE include)
+  # ament_target_dependencies(test_load_diff_drive_controller
+  #   controller_manager
+  # )
+
+  # ament_add_gmock(
+  #   test_accumulator
+  #   test/test_accumulator.cpp
+  # )
+
+  # target_include_directories(test_accumulator PRIVATE include)
+  # ament_target_dependencies(test_accumulator)
+
 endif()
 
+ament_export_dependencies(
+  controller_interface
+  geometry_msgs
+  hardware_interface
+  rclcpp
+  rclcpp_lifecycle
+  tf2
+  tf2_msgs
+)
+ament_export_include_directories(
+  include
+)
+ament_export_libraries(
+  ackermann_steering_controller
+)
 ament_package()
