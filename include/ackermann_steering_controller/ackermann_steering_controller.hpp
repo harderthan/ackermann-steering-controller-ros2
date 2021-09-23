@@ -41,7 +41,7 @@
 
 #include "ackermann_steering_controller/odometry.hpp"
 #include "ackermann_steering_controller/speed_limiter.hpp"
-// #include "ackermann_steering_controller/visibility_control.h"
+#include "ackermann_steering_controller/visibility_control.h"
 
 #include "controller_interface/controller_interface.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -62,32 +62,44 @@
 #include <string>
 #include <vector>
 
-namespace ackermann_steering_controller{
+namespace ackermann_steering_controller
+{
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 class AckermannSteeringController : public controller_interface::ControllerInterface
 {
   using Twist = geometry_msgs::msg::TwistStamped;
 public:
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   AckermannSteeringController();
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   controller_interface::return_type init(const std::string & controller_name) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   controller_interface::return_type update() override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_cleanup(const rclcpp_lifecycle::State & previous_state) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_error(const rclcpp_lifecycle::State & previous_state) override;
 
+  ACKERMANN_STEERING_CONTROLLER_PUBLIC
   CallbackReturn on_shutdown(const rclcpp_lifecycle::State & previous_state) override;
 
 protected:
@@ -98,13 +110,14 @@ protected:
   };
 
   CallbackReturn configure_side(
-    const std::string & side, const std::vector<std::string> & wheel_names,
-    std::vector<WheelHandle> & registered_handles);
+    const std::string & side, const std::string & wheel_name,
+    WheelHandle & registered_handle);
 
-//   std::vector<std::string> left_wheel_names_;
-//   std::vector<std::string> right_wheel_names_;
-//   std::vector<WheelHandle> registered_left_wheel_handles_;
-//   std::vector<WheelHandle> registered_right_wheel_handles_;
+  std::string rear_wheel_name_;
+  std::string front_wheel_name_;
+
+  WheelHandle registered_rear_wheel_handle_;
+  WheelHandle registered_front_wheel_handle_;
 
   struct WheelParams
   {
