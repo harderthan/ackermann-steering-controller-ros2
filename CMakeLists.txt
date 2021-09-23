@@ -24,7 +24,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
 
 add_library(ackermann_steering_controller SHARED
-  # src/ackermann_steering_controller.cpp
+  src/ackermann_steering_controller.cpp
 )
 
 target_include_directories(ackermann_steering_controller PRIVATE include)
