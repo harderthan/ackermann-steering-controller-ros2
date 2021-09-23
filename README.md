@@ -11,3 +11,10 @@ $ wget https://raw.githubusercontent.com/ros-controls/ros2_control/foxy/ros2_con
 $ vcs import src < ros2_control.repos
 ```
 
+### TODO 
+- [ ] Trouble shooting to build
+- [ ] Add the Odometry/Velocity Calculation on ackermann_steering_controller.cpp
+- [ ] Update Odometry.hpp and .cpp
+- [ ] Update documents (remarks, descriptions, etc.)
+- [ ] Add Test Code
+- [ ] PR
