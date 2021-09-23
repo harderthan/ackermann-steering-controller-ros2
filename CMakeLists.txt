@@ -7,7 +7,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  # add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra)
 endif()
 
 # find dependencies
@@ -25,6 +26,8 @@ find_package(tf2_msgs REQUIRED)
 
 add_library(ackermann_steering_controller SHARED
   src/ackermann_steering_controller.cpp
+  src/odometry.cpp
+  src/speed_limiter.cpp
 )
 
 target_include_directories(ackermann_steering_controller PRIVATE include)
@@ -45,6 +48,8 @@ ament_target_dependencies(ackermann_steering_controller
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(ackermann_steering_controller PRIVATE "ACKERMANN_STEERING_CONTROLLER_BUILDING_DLL")
+# prevent pluginlib from using boost
+target_compile_definitions(ackermann_steering_controller PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 pluginlib_export_plugin_description_file(controller_interface ackermann_steering_plugin.xml)
 
 install(DIRECTORY include/
