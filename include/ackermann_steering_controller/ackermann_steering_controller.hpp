@@ -111,13 +111,13 @@ protected:
 
   CallbackReturn configure_side(
     const std::string & side, const std::string & wheel_name,
-    WheelHandle & registered_handle);
-
+    std::vector<WheelHandle> & registered_handles);
+    
   std::string rear_wheel_name_;
   std::string front_wheel_name_;
 
-  WheelHandle registered_rear_wheel_handle_;
-  WheelHandle registered_front_wheel_handle_;
+  std::vector<WheelHandle> registered_rear_wheel_handle_;
+  std::vector<WheelHandle> registered_front_wheel_handle_;
 
   struct WheelParams
   {

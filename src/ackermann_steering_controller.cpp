@@ -487,13 +487,12 @@ CallbackReturn AckermannSteeringController::on_activate(const rclcpp_lifecycle::
     return CallbackReturn::ERROR;
   }
 
-  // TODO: registered_*_wheel_handle is not a vector type.
-  //   if (registered_rear_wheel_handle_.empty() || registered_front_wheel_handle_.empty())
-  //   {
-  //     RCLCPP_ERROR(
-  //       node_->get_logger(), "Either left wheel interfaces, right wheel interfaces are non existent");
-  //     return CallbackReturn::ERROR;
-  //   }
+  if (registered_rear_wheel_handle_.empty() || registered_front_wheel_handle_.empty())
+  {
+    RCLCPP_ERROR(
+        node_->get_logger(), "Either left wheel interfaces, right wheel interfaces are non existent");
+    return CallbackReturn::ERROR;
+  }
 
   is_halted = false;
   subscriber_is_active_ = true;
@@ -536,10 +535,9 @@ bool AckermannSteeringController::reset()
   std::queue<Twist> empty;
   std::swap(previous_commands_, empty);
 
-  // TODO: registered_*_wheel_handle is not a vector type.
-  //   registered_left_wheel_handles_.clear();
-  //   registered_right_wheel_handles_.clear();
-
+  registered_rear_wheel_handle_.clear();
+  registered_front_wheel_handle_.clear();
+  
   subscriber_is_active_ = false;
   velocity_command_subscriber_.reset();
   velocity_command_unstamped_subscriber_.reset();
@@ -571,7 +569,7 @@ void AckermannSteeringController::halt()
 // TODO: Update
 CallbackReturn AckermannSteeringController::configure_side(
   const std::string & side, const std::string & wheel_name,
-  WheelHandle & registered_handle)
+  std::vector<WheelHandle> & registered_handles)
 {
   auto logger = node_->get_logger();
 
