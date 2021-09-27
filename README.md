@@ -9,10 +9,11 @@ $ apt install python3-vcstool # for vcs
 $ cd /path/to/workspace/
 $ wget https://raw.githubusercontent.com/ros-controls/ros2_control/foxy/ros2_control/ros2_control.repos
 $ vcs import src < ros2_control.repos
+$ git clone -b ros2-master https://github.com/ros-controls/control_toolbox.git ./src/
 ```
 
 ### TODO 
-- [ ] Trouble shooting to build
+- [x] Trouble shooting to build
 - [ ] Add the Odometry/Velocity Calculation on ackermann_steering_controller.cpp
 - [ ] Update Odometry.hpp and .cpp
 - [ ] Update documents (remarks, descriptions, etc.)
