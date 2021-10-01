@@ -28,10 +28,8 @@ Odometry::Odometry(size_t velocity_rolling_window_size)
   linear_(0.0),
   angular_(0.0),
   wheel_separation_(0.0),
-  left_wheel_radius_(0.0),
-  right_wheel_radius_(0.0),
-  left_wheel_old_pos_(0.0),
-  right_wheel_old_pos_(0.0),
+  wheel_radius_(0.0),
+  rear_wheel_old_pos_(0.0),
   velocity_rolling_window_size_(velocity_rolling_window_size),
   linear_accumulator_(velocity_rolling_window_size),
   angular_accumulator_(velocity_rolling_window_size)
@@ -45,7 +43,7 @@ void Odometry::init(const rclcpp::Time & time)
   timestamp_ = time;
 }
 
-bool Odometry::update(double left_pos, double right_pos, const rclcpp::Time & time)
+bool Odometry::update(double rear_wheel_pos, double front_steer_pos, const rclcpp::Time & time)
 {
   // We cannot estimate the speed with very small time intervals:
   const double dt = time.seconds() - timestamp_.seconds();
@@ -55,21 +53,18 @@ bool Odometry::update(double left_pos, double right_pos, const rclcpp::Time & ti
   }
 
   // Get current wheel joint positions:
-  const double left_wheel_cur_pos = left_pos * left_wheel_radius_;
-  const double right_wheel_cur_pos = right_pos * right_wheel_radius_;
+  const double rear_wheel_cur_pos = rear_wheel_pos * wheel_radius_;
 
   // Estimate velocity of wheels using old and current position:
-  const double left_wheel_est_vel = left_wheel_cur_pos - left_wheel_old_pos_;
-  const double right_wheel_est_vel = right_wheel_cur_pos - right_wheel_old_pos_;
+  const double rear_wheel_est_vel = rear_wheel_cur_pos - rear_wheel_old_pos_;
 
   // Update old position with current:
-  left_wheel_old_pos_ = left_wheel_cur_pos;
-  right_wheel_old_pos_ = right_wheel_cur_pos;
+  rear_wheel_old_pos_ = rear_wheel_cur_pos;
 
   // Compute linear and angular diff:
-  const double linear = (right_wheel_est_vel + left_wheel_est_vel) * 0.5;
+  const double linear = rear_wheel_est_vel; //(right_wheel_est_vel + left_wheel_est_vel) * 0.5;
   // Now there is a bug about scout angular velocity
-  const double angular = (right_wheel_est_vel - left_wheel_est_vel) / wheel_separation_;
+  const double angular = tan(front_steer_pos) * linear / wheel_separation_;
 
   // Integrate odometry:
   integrateExact(linear, angular);
@@ -105,12 +100,10 @@ void Odometry::resetOdometry()
   heading_ = 0.0;
 }
 
-void Odometry::setWheelParams(
-  double wheel_separation, double left_wheel_radius, double right_wheel_radius)
+void Odometry::setWheelParams(double wheel_separation, double wheel_radius)
 {
   wheel_separation_ = wheel_separation;
-  left_wheel_radius_ = left_wheel_radius;
-  right_wheel_radius_ = right_wheel_radius;
+  wheel_radius_ = wheel_radius;
 }
 
 void Odometry::setVelocityRollingWindowSize(size_t velocity_rolling_window_size)
