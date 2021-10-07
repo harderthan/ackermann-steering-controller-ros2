@@ -200,8 +200,26 @@ controller_interface::return_type AckermannSteeringController::update()
   }
   else
   {
-    // TODO: Calculate Odometry of Vehicle of Ackermann Steering Control Type  
-    // odometry_.update(left_position_mean, right_position_mean, current_time);
+    double left_position_mean = 0.0;
+    double right_position_mean = 0.0;
+    // TODO: Ackermann Steering Controller haven't   wheels_per_side
+    for (size_t index = 0; index < wheels.wheels_per_side; ++index)
+    {
+      const double left_position = registered_rear_wheel_handle_[index].position.get().get_value();
+      const double right_position = registered_front_steer_handle_[index].position.get().get_value();
+      if (std::isnan(left_position) || std::isnan(right_position))
+      {
+        RCLCPP_ERROR(
+          logger, "Either the left or right wheel position is invalid for index [%zu]", index);
+        return controller_interface::return_type::ERROR;
+      }
+      left_position_mean += left_position;
+      right_position_mean += right_position;
+    }
+    left_position_mean /= wheels.wheels_per_side;
+    right_position_mean /= wheels.wheels_per_side;    
+    
+    odometry_.update(left_position_mean, right_position_mean, current_time);
   }
   
   tf2::Quaternion orientation;
@@ -262,12 +280,16 @@ controller_interface::return_type AckermannSteeringController::update()
   //   const double velocity_rear =
   //   const double velocity_front =
   //   const double position_front = 
+  const double wheel_vel = linear_command/wheel_params_.radius; // omega = linear_vel / radius
 
   // TODO: Set wheels velocities:
-  //   registered_rear_wheel_handle.velocity.get().set_value(velocity_rear);
-  //   registered_rear_wheel_handle.position.get().set_value();
-  //   registered_front_steer_handle.velocity.get().set_value(velocity_front);
-  //   registered_front_steer_handle.position.get().set_value(position_front);
+  for (size_t index = 0; index < wheels.wheels_per_side; ++index)
+  {
+    //   registered_rear_wheel_handle.velocity.get().set_value(velocity_rear);
+    registered_rear_wheel_handle_[index].velocity.get().set_value(wheel_vel); // set on velocity ?
+    registered_front_steer_handle_[index].velocity.get().set_value(angular_command);
+    //   registered_front_steer_handle.position.get().set_value(position_front);
+  }
 
   return controller_interface::return_type::OK;
 }
