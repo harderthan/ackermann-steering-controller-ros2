@@ -114,10 +114,10 @@ protected:
     std::vector<WheelHandle> & registered_handles);
     
   std::string rear_wheel_name_;
-  std::string front_wheel_name_;
+  std::string front_steer_name_;
 
   std::vector<WheelHandle> registered_rear_wheel_handle_;
-  std::vector<WheelHandle> registered_front_wheel_handle_;
+  std::vector<WheelHandle> registered_front_steer_handle_;
 
   struct WheelParams
   {
