@@ -190,9 +190,9 @@ controller_interface::return_type AckermannSteeringController::update()
 
   // Apply (possibly new) multipliers:
   const auto wheels = wheel_params_;
-  const double wheel_separation = wheels.separation_multiplier * wheels.separation;
-  const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
-  const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
+  // const double wheel_separation = wheels.separation_multiplier * wheels.separation;
+  // const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
+  // const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
 
   if (odom_params_.open_loop)
   {
@@ -332,7 +332,7 @@ CallbackReturn AckermannSteeringController::on_configure(const rclcpp_lifecycle:
 
   const double wheel_separation = wheels.separation_multiplier * wheels.separation;
   const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
-  const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
+  // const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
 
   odometry_.setWheelParams(wheel_separation, left_wheel_radius); // TODO: (double wheel_separation_h, double wheel_radius)
   odometry_.setVelocityRollingWindowSize(
