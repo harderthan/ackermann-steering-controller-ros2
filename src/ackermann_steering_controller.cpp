@@ -84,6 +84,9 @@ controller_interface::return_type AckermannSteeringController::init(const std::s
     auto_declare<std::string>("left_wheel_name", std::string());
     auto_declare<std::string>("right_wheel_name", std::string());
 
+    auto_declare<std::string>("rear_wheel_name", std::string());
+    auto_declare<std::string>("front_steer_name", std::string());
+
     auto_declare<double>("wheel_separation", wheel_params_.separation);
     auto_declare<int>("wheels_per_side", wheel_params_.wheels_per_side);
     auto_declare<double>("wheel_radius", wheel_params_.radius);
@@ -136,7 +139,7 @@ InterfaceConfiguration AckermannSteeringController::command_interface_configurat
 {
   std::vector<std::string> conf_names;
   conf_names.emplace_back(rear_wheel_name_ + "/" + HW_IF_VELOCITY);
-  conf_names.emplace_back(front_wheel_name_ + "/" + HW_IF_VELOCITY);
+  conf_names.emplace_back(front_steer_name_ + "/" + HW_IF_VELOCITY);
   return {interface_configuration_type::INDIVIDUAL, conf_names};
 }
 
@@ -144,7 +147,7 @@ InterfaceConfiguration AckermannSteeringController::state_interface_configuratio
 {
   std::vector<std::string> conf_names;
   conf_names.emplace_back(rear_wheel_name_ + "/" + HW_IF_POSITION);
-  conf_names.emplace_back(front_wheel_name_ + "/" + HW_IF_POSITION);
+  conf_names.emplace_back(front_steer_name_ + "/" + HW_IF_POSITION);
   return {interface_configuration_type::INDIVIDUAL, conf_names};
 }
 
@@ -187,9 +190,9 @@ controller_interface::return_type AckermannSteeringController::update()
 
   // Apply (possibly new) multipliers:
   const auto wheels = wheel_params_;
-  const double wheel_separation = wheels.separation_multiplier * wheels.separation;
-  const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
-  const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
+  // const double wheel_separation = wheels.separation_multiplier * wheels.separation;
+  // const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
+  // const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
 
   if (odom_params_.open_loop)
   {
@@ -197,8 +200,26 @@ controller_interface::return_type AckermannSteeringController::update()
   }
   else
   {
-    // TODO: Calculate Odometry of Vehicle of Ackermann Steering Control Type  
-    // odometry_.update(left_position_mean, right_position_mean, current_time);
+    double left_position_mean = 0.0;
+    double right_position_mean = 0.0;
+    // TODO: Ackermann Steering Controller haven't   wheels_per_side
+    for (size_t index = 0; index < wheels.wheels_per_side; ++index)
+    {
+      const double left_position = registered_rear_wheel_handle_[index].position.get().get_value();
+      const double right_position = registered_front_steer_handle_[index].position.get().get_value();
+      if (std::isnan(left_position) || std::isnan(right_position))
+      {
+        RCLCPP_ERROR(
+          logger, "Either the left or right wheel position is invalid for index [%zu]", index);
+        return controller_interface::return_type::ERROR;
+      }
+      left_position_mean += left_position;
+      right_position_mean += right_position;
+    }
+    left_position_mean /= wheels.wheels_per_side;
+    right_position_mean /= wheels.wheels_per_side;    
+    
+    odometry_.update(left_position_mean, right_position_mean, current_time);
   }
   
   tf2::Quaternion orientation;
@@ -259,12 +280,16 @@ controller_interface::return_type AckermannSteeringController::update()
   //   const double velocity_rear =
   //   const double velocity_front =
   //   const double position_front = 
+  const double wheel_vel = linear_command/wheel_params_.radius; // omega = linear_vel / radius
 
   // TODO: Set wheels velocities:
-  //   registered_rear_wheel_handle.velocity.get().set_value(velocity_rear);
-  //   registered_rear_wheel_handle.position.get().set_value();
-  //   registered_front_wheel_handle.velocity.get().set_value(velocity_front);
-  //   registered_front_wheel_handle.position.get().set_value(position_front);
+  for (size_t index = 0; index < wheels.wheels_per_side; ++index)
+  {
+    //   registered_rear_wheel_handle.velocity.get().set_value(velocity_rear);
+    registered_rear_wheel_handle_[index].velocity.get().set_value(wheel_vel); // set on velocity ?
+    registered_front_steer_handle_[index].velocity.get().set_value(angular_command);
+    //   registered_front_steer_handle.position.get().set_value(position_front);
+  }
 
   return controller_interface::return_type::OK;
 }
@@ -275,7 +300,7 @@ CallbackReturn AckermannSteeringController::on_configure(const rclcpp_lifecycle:
 
   // update parameters
   rear_wheel_name_ = node_->get_parameter("rear_wheel_name").as_string();
-  front_wheel_name_ = node_->get_parameter("front_wheel_name").as_string();
+  front_steer_name_ = node_->get_parameter("front_steer_name").as_string();
 
   // Check size of wheels 
     //   if (left_wheel_names_.size() != right_wheel_names_.size())
@@ -286,7 +311,7 @@ CallbackReturn AckermannSteeringController::on_configure(const rclcpp_lifecycle:
     //     return CallbackReturn::ERROR;
     //   }
 
-  if (rear_wheel_name_.empty() || front_wheel_name_.empty())
+  if (rear_wheel_name_.empty() || front_steer_name_.empty())
   {
     RCLCPP_ERROR(logger, "Wheel names parameters are empty!");
     return CallbackReturn::ERROR;
@@ -307,9 +332,9 @@ CallbackReturn AckermannSteeringController::on_configure(const rclcpp_lifecycle:
 
   const double wheel_separation = wheels.separation_multiplier * wheels.separation;
   const double left_wheel_radius = wheels.left_radius_multiplier * wheels.radius;
-  const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
+  // const double right_wheel_radius = wheels.right_radius_multiplier * wheels.radius;
 
-  odometry_.setWheelParams(wheel_separation, left_wheel_radius, right_wheel_radius);
+  odometry_.setWheelParams(wheel_separation, left_wheel_radius); // TODO: (double wheel_separation_h, double wheel_radius)
   odometry_.setVelocityRollingWindowSize(
     node_->get_parameter("velocity_rolling_window_size").as_int());
 
@@ -480,14 +505,14 @@ CallbackReturn AckermannSteeringController::on_activate(const rclcpp_lifecycle::
   const auto rear_result =
     configure_side("rear", rear_wheel_name_, registered_rear_wheel_handle_);
   const auto front_result =
-    configure_side("front", front_wheel_name_, registered_front_wheel_handle_);
+    configure_side("front", front_steer_name_, registered_front_steer_handle_);
 
   if (rear_result == CallbackReturn::ERROR || front_result == CallbackReturn::ERROR)
   {
     return CallbackReturn::ERROR;
   }
 
-  if (registered_rear_wheel_handle_.empty() || registered_front_wheel_handle_.empty())
+  if (registered_rear_wheel_handle_.empty() || registered_front_steer_handle_.empty())
   {
     RCLCPP_ERROR(
         node_->get_logger(), "Either left wheel interfaces, right wheel interfaces are non existent");
@@ -536,7 +561,7 @@ bool AckermannSteeringController::reset()
   std::swap(previous_commands_, empty);
 
   registered_rear_wheel_handle_.clear();
-  registered_front_wheel_handle_.clear();
+  registered_front_steer_handle_.clear();
   
   subscriber_is_active_ = false;
   velocity_command_subscriber_.reset();
@@ -563,7 +588,7 @@ void AckermannSteeringController::halt()
   };
 
   halt_wheels(registered_rear_wheel_handle_);
-  halt_wheels(registered_front_wheel_handle_);
+  halt_wheels(registered_front_steer_handle_);
 }
 
 // TODO: Update
@@ -579,38 +604,33 @@ CallbackReturn AckermannSteeringController::configure_side(
     return CallbackReturn::ERROR;
   }
 
-  // TODO: register handles
-//   registered_handles.reserve(wheel_names.size());
-//   for (const auto & wheel_name : wheel_names)
-//   {
-//     const auto state_handle = std::find_if(
-//       state_interfaces_.cbegin(), state_interfaces_.cend(), [&wheel_name](const auto & interface) {
-//         return interface.get_name() == wheel_name &&
-//                interface.get_interface_name() == HW_IF_POSITION;
-//       });
+  const auto state_handle = std::find_if(
+      state_interfaces_.cbegin(), state_interfaces_.cend(), [&wheel_name](const auto &interface)
+      { return interface.get_name() == wheel_name &&
+               interface.get_interface_name() == HW_IF_POSITION; });
 
-//     if (state_handle == state_interfaces_.cend())
-//     {
-//       RCLCPP_ERROR(logger, "Unable to obtain joint state handle for %s", wheel_name.c_str());
-//       return CallbackReturn::ERROR;
-//     }
+  if (state_handle == state_interfaces_.cend())
+  {
+    RCLCPP_ERROR(logger, "Unable to obtain joint state handle for %s", wheel_name.c_str());
+    return CallbackReturn::ERROR;
+  }
 
-//     const auto command_handle = std::find_if(
-//       command_interfaces_.begin(), command_interfaces_.end(),
-//       [&wheel_name](const auto & interface) {
-//         return interface.get_name() == wheel_name &&
-//                interface.get_interface_name() == HW_IF_VELOCITY;
-//       });
+  const auto command_handle = std::find_if(
+      command_interfaces_.begin(), command_interfaces_.end(),
+      [&wheel_name](const auto &interface)
+      {
+        return interface.get_name() == wheel_name &&
+               interface.get_interface_name() == HW_IF_VELOCITY;
+      });
 
-//     if (command_handle == command_interfaces_.end())
-//     {
-//       RCLCPP_ERROR(logger, "Unable to obtain joint command handle for %s", wheel_name.c_str());
-//       return CallbackReturn::ERROR;
-//     }
+  if (command_handle == command_interfaces_.end())
+  {
+    RCLCPP_ERROR(logger, "Unable to obtain joint command handle for %s", wheel_name.c_str());
+    return CallbackReturn::ERROR;
+  }
 
-//     registered_handles.emplace_back(
-//       WheelHandle{std::ref(*state_handle), std::ref(*command_handle)});
-//   }
+  registered_handles.emplace_back(
+      WheelHandle{std::ref(*state_handle), std::ref(*command_handle)});
 
   return CallbackReturn::SUCCESS;
 }
