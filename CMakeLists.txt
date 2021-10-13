@@ -63,10 +63,8 @@ install(TARGETS ackermann_steering_controller
 )
 
 if(BUILD_TESTING)
-  # Samples From diff_drive_controller 
-
-  # find_package(ament_cmake_gmock REQUIRED)
-  # find_package(controller_manager REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
+  find_package(controller_manager REQUIRED)
 
   # ament_add_gmock(test_diff_drive_controller
   #   test/test_diff_drive_controller.cpp
@@ -87,14 +85,14 @@ if(BUILD_TESTING)
   #   tf2_msgs
   # )
 
-  # ament_add_gmock(
-  #   test_load_diff_drive_controller
-  #   test/test_load_diff_drive_controller.cpp
-  # )
-  # target_include_directories(test_load_diff_drive_controller PRIVATE include)
-  # ament_target_dependencies(test_load_diff_drive_controller
-  #   controller_manager
-  # )
+  ament_add_gmock(
+    test_load_ackermann_steering_controller
+    test/test_load_ackermann_steering_controller.cpp
+  )
+  target_include_directories(test_load_ackermann_steering_controller PRIVATE include)
+  ament_target_dependencies(test_load_ackermann_steering_controller
+    controller_manager
+  )
 
   # ament_add_gmock(
   #   test_accumulator
