@@ -604,38 +604,33 @@ CallbackReturn AckermannSteeringController::configure_side(
     return CallbackReturn::ERROR;
   }
 
-  // TODO: register handles
-//   registered_handles.reserve(wheel_names.size());
-//   for (const auto & wheel_name : wheel_names)
-//   {
-//     const auto state_handle = std::find_if(
-//       state_interfaces_.cbegin(), state_interfaces_.cend(), [&wheel_name](const auto & interface) {
-//         return interface.get_name() == wheel_name &&
-//                interface.get_interface_name() == HW_IF_POSITION;
-//       });
+  const auto state_handle = std::find_if(
+      state_interfaces_.cbegin(), state_interfaces_.cend(), [&wheel_name](const auto &interface)
+      { return interface.get_name() == wheel_name &&
+               interface.get_interface_name() == HW_IF_POSITION; });
 
-//     if (state_handle == state_interfaces_.cend())
-//     {
-//       RCLCPP_ERROR(logger, "Unable to obtain joint state handle for %s", wheel_name.c_str());
-//       return CallbackReturn::ERROR;
-//     }
+  if (state_handle == state_interfaces_.cend())
+  {
+    RCLCPP_ERROR(logger, "Unable to obtain joint state handle for %s", wheel_name.c_str());
+    return CallbackReturn::ERROR;
+  }
 
-//     const auto command_handle = std::find_if(
-//       command_interfaces_.begin(), command_interfaces_.end(),
-//       [&wheel_name](const auto & interface) {
-//         return interface.get_name() == wheel_name &&
-//                interface.get_interface_name() == HW_IF_VELOCITY;
-//       });
+  const auto command_handle = std::find_if(
+      command_interfaces_.begin(), command_interfaces_.end(),
+      [&wheel_name](const auto &interface)
+      {
+        return interface.get_name() == wheel_name &&
+               interface.get_interface_name() == HW_IF_VELOCITY;
+      });
 
-//     if (command_handle == command_interfaces_.end())
-//     {
-//       RCLCPP_ERROR(logger, "Unable to obtain joint command handle for %s", wheel_name.c_str());
-//       return CallbackReturn::ERROR;
-//     }
+  if (command_handle == command_interfaces_.end())
+  {
+    RCLCPP_ERROR(logger, "Unable to obtain joint command handle for %s", wheel_name.c_str());
+    return CallbackReturn::ERROR;
+  }
 
-//     registered_handles.emplace_back(
-//       WheelHandle{std::ref(*state_handle), std::ref(*command_handle)});
-//   }
+  registered_handles.emplace_back(
+      WheelHandle{std::ref(*state_handle), std::ref(*command_handle)});
 
   return CallbackReturn::SUCCESS;
 }
