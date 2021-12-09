@@ -86,11 +86,11 @@ if(BUILD_TESTING)
   # )
 
   ament_add_gmock(
-    test_load_ackermann_steering_controller
-    test/test_load_ackermann_steering_controller.cpp
+    ackermann_steering_controller_load_test
+    test/ackermann_steering_controller_load_test/ackermann_steering_controller_load_test.cpp
   )
-  target_include_directories(test_load_ackermann_steering_controller PRIVATE include)
-  ament_target_dependencies(test_load_ackermann_steering_controller
+  target_include_directories(ackermann_steering_controller_load_test PRIVATE include)
+  ament_target_dependencies(ackermann_steering_controller_load_test
     controller_manager
   )
 

@@ -17,7 +17,7 @@
 
 #include "controller_manager/controller_manager.hpp"
 #include "rclcpp/utilities.hpp"
-#include "test_common.hpp" // TODO: update common urdf for ackermann 
+#include "common_load_test.hpp" // TODO: update common urdf for ackermann 
 
 TEST(TestLoadAckermannSteeringController, load_controller)
 {
